@@ -30,6 +30,9 @@
     }
 
     const displayHost = normalizeHostname(hostname);
+    const openAppUrl = `onesecmvp://unlock?host=${encodeURIComponent(
+      displayHost
+    )}`;
     const html = `
       <head>
         <meta charset="utf-8" />
@@ -85,7 +88,7 @@
             gap: 12px;
             flex-wrap: wrap;
           }
-          button {
+          .action {
             appearance: none;
             border: 1px solid #d9d2c8;
             background: #fff7ee;
@@ -94,8 +97,12 @@
             border-radius: 999px;
             font-size: 15px;
             font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
           }
-          button.secondary {
+          .action.secondary {
             background: #ffffff;
           }
         </style>
@@ -107,8 +114,8 @@
             <p>This site is blocked by your settings.</p>
             <div class="domain">${displayHost}</div>
             <div class="actions">
-              <button type="button">Open app</button>
-              <button type="button" class="secondary">Close</button>
+              <a class="action" href="${openAppUrl}">Open app</a>
+              <button type="button" class="action secondary">Close</button>
             </div>
           </main>
         </div>

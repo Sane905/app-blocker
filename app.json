@@ -3,6 +3,7 @@
     "name": "app-blocker",
     "slug": "app-blocker",
     "version": "1.0.0",
+    "scheme": "onesecmvp",
     "plugins": [
       [
         "react-native-safari-extension",
