@@ -1,5 +1,10 @@
 (() => {
-  const BLOCKED_DOMAINS = new Set(["m.youtube.com", "x.com", "twitter.com"]);
+  const BLOCKED_DOMAINS = new Set(["youtube.com", "x.com", "twitter.com"]);
+  const BLOCKED_ROOT_ID = "app-blocker-root";
+  const BLOCKED_ATTR = "data-app-blocker";
+  let currentBlockedHost = null;
+  let isApplying = false;
+  let observer = null;
 
   const normalizeHostname = (hostname) => {
     const lower = (hostname || "").toLowerCase();
@@ -10,6 +15,20 @@
     BLOCKED_DOMAINS.has(normalizeHostname(hostname));
 
   const renderBlocked = (hostname) => {
+    if (isApplying) {
+      return;
+    }
+    isApplying = true;
+    currentBlockedHost = hostname;
+
+    if (typeof window.stop === "function") {
+      try {
+        window.stop();
+      } catch {
+        // Ignore failures; we still replace DOM.
+      }
+    }
+
     const displayHost = normalizeHostname(hostname);
     const html = `
       <head>
@@ -19,16 +38,26 @@
         <style>
           :root { color-scheme: light; }
           * { box-sizing: border-box; }
-          html, body { height: 100%; }
+          html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+          }
           body {
             margin: 0;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
             background: #f5f3ef;
             color: #1b1b1b;
+          }
+          #${BLOCKED_ROOT_ID} {
+            position: fixed;
+            inset: 0;
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 24px;
+            background: #f5f3ef;
+            overflow: hidden;
           }
           .card {
             width: min(560px, 92vw);
@@ -72,21 +101,25 @@
         </style>
       </head>
       <body>
-        <main class="card" role="main">
-          <h1>Blocked</h1>
-          <p>This site is blocked by your settings.</p>
-          <div class="domain">${displayHost}</div>
-          <div class="actions">
-            <button type="button">Open app</button>
-            <button type="button" class="secondary">Close</button>
-          </div>
-        </main>
+        <div id="${BLOCKED_ROOT_ID}">
+          <main class="card" role="main">
+            <h1>Blocked</h1>
+            <p>This site is blocked by your settings.</p>
+            <div class="domain">${displayHost}</div>
+            <div class="actions">
+              <button type="button">Open app</button>
+              <button type="button" class="secondary">Close</button>
+            </div>
+          </main>
+        </div>
       </body>
     `;
 
     if (document.documentElement) {
+      document.documentElement.setAttribute(BLOCKED_ATTR, "true");
       document.documentElement.innerHTML = html;
     }
+    isApplying = false;
   };
 
   const handleLocationChange = () => {
@@ -113,7 +146,27 @@
     window.addEventListener("popstate", handleLocationChange);
   };
 
+  const ensureObserver = () => {
+    if (observer || !document.documentElement) {
+      return;
+    }
+    observer = new MutationObserver(() => {
+      if (!currentBlockedHost || isApplying) {
+        return;
+      }
+      const root = document.getElementById(BLOCKED_ROOT_ID);
+      if (!root) {
+        renderBlocked(currentBlockedHost);
+      }
+    });
+    observer.observe(document.documentElement, {
+      childList: true,
+      subtree: true,
+    });
+  };
+
   hookHistory();
+  ensureObserver();
   if (document.documentElement) {
     handleLocationChange();
   } else {
