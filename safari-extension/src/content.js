@@ -1,12 +1,13 @@
 (() => {
-  const BLOCKED_DOMAINS = new Set(["youtube.com", "x.com", "twitter.com"]);
+  const BLOCKED_DOMAINS = new Set(["m.youtube.com", "x.com", "twitter.com"]);
 
   const normalizeHostname = (hostname) => {
     const lower = (hostname || "").toLowerCase();
     return lower.startsWith("www.") ? lower.slice(4) : lower;
   };
 
-  const isBlocked = (hostname) => BLOCKED_DOMAINS.has(normalizeHostname(hostname));
+  const isBlocked = (hostname) =>
+    BLOCKED_DOMAINS.has(normalizeHostname(hostname));
 
   const renderBlocked = (hostname) => {
     const displayHost = normalizeHostname(hostname);
@@ -116,6 +117,8 @@
   if (document.documentElement) {
     handleLocationChange();
   } else {
-    document.addEventListener("DOMContentLoaded", handleLocationChange, { once: true });
+    document.addEventListener("DOMContentLoaded", handleLocationChange, {
+      once: true,
+    });
   }
 })();

@@ -21,6 +21,7 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
+      "bundleIdentifier": "com.sane905.appblocker",
       "supportsTablet": true
     },
     "android": {
