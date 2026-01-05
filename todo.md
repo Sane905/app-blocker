@@ -1,4 +1,4 @@
-# TODO (current) — Block UI "Open app" deep link
+# TODO (current) — Rewarded video ads in Expo (AdMob) after "広告を見て解除"
 
 ---
 
