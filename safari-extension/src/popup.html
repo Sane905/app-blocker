@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>App Blocker Extension</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <div class="container">
+      <h1>App Blocker</h1>
+      <p class="label">現在のドメイン</p>
+      <p id="domain" class="domain">読み込み中...</p>
+      <p id="message" class="message" role="status" aria-live="polite"></p>
+      <div class="actions">
+        <button id="add-btn" type="button">このサイトをブロックに追加</button>
+        <button id="remove-btn" type="button" class="secondary">
+          このサイトのブロックを解除
+        </button>
+      </div>
+    </div>
+    <script src="popup.js"></script>
+  </body>
+</html>

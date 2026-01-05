@@ -8,13 +8,14 @@
 本フェーズで実装するのは以下のみ：
 
 - iOS Safari Web Extension
-- ハードコードされたドメインブロック
+- popup UI によるブロックリストの追加/削除（MVP）
+- browser.storage.local に保存したブロックリストに基づくドメインブロック
 - DOM を全面置換する Blocked UI
 - Expo Dev Client + prebuild による iOS Simulator 動作確認
 
 以下は **本フェーズでは扱わない**：
 
-- アンロック（解除）処理
+- アプリ側のアンロック（解除）処理
 - 広告 / タスク
 - 課金
 - アプリ側の設定画面
@@ -79,11 +80,10 @@
 
 ## Safari Web Extension 実装方針
 
-### ブロック対象ドメイン（固定）
+### ブロック対象ドメイン（可変）
 
-- `youtube.com`
-- `x.com`
-- `twitter.com`
+- Safari 拡張 popup で追加/削除するドメインを使用
+- `browser.storage.local` の `blocklist` に保存する
 
 ### ドメイン判定ルール
 

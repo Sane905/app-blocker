@@ -3,6 +3,11 @@
   "name": "App Blocker",
   "version": "1.0.0",
   "description": "Blocks specified domains in Safari.",
+  "permissions": ["storage", "activeTab", "tabs"],
+  "action": {
+    "default_title": "App Blocker (Extension)",
+    "default_popup": "src/popup.html"
+  },
   "content_scripts": [
     {
       "matches": ["<all_urls>"],

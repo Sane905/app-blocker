@@ -1,18 +1,79 @@
 (() => {
-  const BLOCKED_DOMAINS = new Set(["youtube.com", "x.com", "twitter.com"]);
   const BLOCKED_ROOT_ID = "app-blocker-root";
   const BLOCKED_ATTR = "data-app-blocker";
+  const STORAGE_KEY = "blocklist";
+  const extensionApi = globalThis.browser ?? globalThis.chrome;
   let currentBlockedHost = null;
   let isApplying = false;
   let observer = null;
+  let cachedBlocklist = [];
+  let hasCache = false;
+  let isLoadingBlocklist = false;
 
   const normalizeHostname = (hostname) => {
     const lower = (hostname || "").toLowerCase();
     return lower.startsWith("www.") ? lower.slice(4) : lower;
   };
 
-  const isBlocked = (hostname) =>
-    BLOCKED_DOMAINS.has(normalizeHostname(hostname));
+  const storageGet = (key) =>
+    new Promise((resolve) => {
+      if (!extensionApi?.storage?.local?.get) {
+        resolve({});
+        return;
+      }
+      let settled = false;
+      const finish = (result) => {
+        if (settled) {
+          return;
+        }
+        settled = true;
+        resolve(result || {});
+      };
+      const maybePromise = extensionApi.storage.local.get(key, (result) => {
+        if (extensionApi?.runtime?.lastError) {
+          finish({});
+          return;
+        }
+        finish(result);
+      });
+      if (maybePromise && typeof maybePromise.then === "function") {
+        maybePromise.then(finish).catch(() => finish({}));
+      }
+    });
+
+  const refreshBlocklist = async () => {
+    if (isLoadingBlocklist) {
+      return cachedBlocklist;
+    }
+    isLoadingBlocklist = true;
+    try {
+      const data = await storageGet([STORAGE_KEY]);
+      const list = Array.isArray(data?.[STORAGE_KEY]) ? data[STORAGE_KEY] : [];
+      cachedBlocklist = list.map(normalizeHostname).filter(Boolean);
+      hasCache = true;
+      return cachedBlocklist;
+    } catch {
+      return [];
+    } finally {
+      isLoadingBlocklist = false;
+    }
+  };
+
+  const getBlocklist = async () => {
+    if (hasCache) {
+      return cachedBlocklist;
+    }
+    return refreshBlocklist();
+  };
+
+  const isBlocked = async (hostname) => {
+    const normalized = normalizeHostname(hostname);
+    if (!normalized) {
+      return false;
+    }
+    const blocklist = await getBlocklist();
+    return blocklist.includes(normalized);
+  };
 
   const renderBlocked = (hostname) => {
     if (isApplying) {
@@ -130,9 +191,17 @@
     isApplying = false;
   };
 
-  const handleLocationChange = () => {
-    if (isBlocked(location.hostname)) {
-      renderBlocked(location.hostname);
+  const handleLocationChange = async () => {
+    const hostname = location.hostname;
+    if (!hostname) {
+      return;
+    }
+    const blocked = await isBlocked(hostname);
+    if (hostname !== location.hostname) {
+      return;
+    }
+    if (blocked) {
+      renderBlocked(hostname);
     }
   };
 
@@ -175,6 +244,18 @@
 
   hookHistory();
   ensureObserver();
+  if (extensionApi?.storage?.onChanged?.addListener) {
+    extensionApi.storage.onChanged.addListener((changes, area) => {
+      if (area !== "local" || !changes?.[STORAGE_KEY]) {
+        return;
+      }
+      const next = changes[STORAGE_KEY].newValue;
+      cachedBlocklist = Array.isArray(next)
+        ? next.map(normalizeHostname).filter(Boolean)
+        : [];
+      hasCache = true;
+    });
+  }
   if (document.documentElement) {
     handleLocationChange();
   } else {
