@@ -30,9 +30,10 @@
     }
 
     const displayHost = normalizeHostname(hostname);
+    const originalUrl = location.href;
     const openAppUrl = `onesecmvp://unlock?host=${encodeURIComponent(
       displayHost
-    )}`;
+    )}&url=${encodeURIComponent(originalUrl)}`;
     const html = `
       <head>
         <meta charset="utf-8" />
